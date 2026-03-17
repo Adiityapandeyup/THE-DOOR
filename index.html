@@ -7,119 +7,165 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        /* Custom Animations & Glassmorphism */
         body {
-            background: linear-gradient(-45deg, #0ea5e9, #38bdf8, #f59e0b, #fbbf24);
-            background-size: 400% 400%;
-            animation: gradient 15s ease infinite;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #7dd3fc, #38bdf8, #60a5fa);
+            background-attachment: fixed;
+            color: #1e293b;
         }
 
-        @keyframes gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
+        /* Glassmorphism Base */
         .glass-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 30px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
         }
 
-        .tab-content { display: none; animation: slideUp 0.4s ease-out; }
+        /* Specific Graphics Backgrounds */
+        #pdf .bg-graphic { 
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2360a5fa' fill-opacity='0.1' fill-rule='evenodd'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 30V0h12v30H6zM0 6h30v12H0V6z'/%3E%3C/g%3E%3C/svg%3E");
+        }
+        #weather .bg-graphic { 
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7z' fill='%230ea5e9' fill-opacity='0.1'/%3E%3C/svg%3E");
+        }
+        #qr .bg-graphic { 
+            background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h20v20H0V0zm10 17a7 7 0 1 0 0-14 7 7 0 0 0 0 14zm20 0a7 7 0 1 0 0-14 7 7 0 0 0 0 14z' fill='%23f59e0b' fill-opacity='0.08'/%3E%3C/svg%3E");
+        }
+        #ip .bg-graphic { 
+            background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h80v80H0V0zm40 40L0 0l80 0z' fill='%233b82f6' fill-opacity='0.05'/%3E%3C/svg%3E");
+        }
+
+        .bg-graphic {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            opacity: 0.6;
+        }
+
+        .tab-content { display: none; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .tab-content.active { display: block; }
 
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.9) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
         }
 
-        .nav-btn.active { color: #fbbf24; border-bottom: 3px solid #fbbf24; }
+        .nav-active { 
+            background: #f59e0b !important;
+            color: white !important;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+        }
     </style>
 </head>
-<body class="text-white font-sans min-h-screen pb-24 md:pb-0 md:pt-24">
+<body class="min-h-screen pb-24 md:pb-0 md:pt-24">
 
-    <nav class="hidden md:flex fixed top-0 w-full bg-black/30 backdrop-blur-md p-4 justify-between items-center z-50 shadow-2xl">
-        <h1 class="text-2xl font-black tracking-tighter text-orange-400">VAGAIRA <span class="text-white font-light">PRO</span></h1>
-        <div class="flex space-x-8 font-medium">
-            <button onclick="showTab('pdf')" class="hover:text-orange-400 transition nav-btn active" id="d-pdf">PDF</button>
-            <button onclick="showTab('weather')" class="hover:text-orange-400 transition nav-btn" id="d-weather">Weather</button>
-            <button onclick="showTab('qr')" class="hover:text-orange-400 transition nav-btn" id="d-qr">QR Scanner</button>
-            <button onclick="showTab('ip')" class="hover:text-orange-400 transition nav-btn" id="d-ip">My IP</button>
+    <nav class="hidden md:flex fixed top-0 w-full bg-white/60 backdrop-blur-xl p-4 justify-between items-center z-50 shadow-sm border-b border-white/40">
+        <h1 class="text-3xl font-extrabold tracking-tighter text-blue-600">VAGAIRA<span class="text-orange-500">.</span></h1>
+        <div class="flex space-x-2">
+            <button onclick="showTab('pdf')" class="px-6 py-2 rounded-full font-semibold transition-all hover:bg-white/50" id="d-pdf">Document</button>
+            <button onclick="showTab('weather')" class="px-6 py-2 rounded-full font-semibold transition-all hover:bg-white/50" id="d-weather">SkyCast</button>
+            <button onclick="showTab('qr')" class="px-6 py-2 rounded-full font-semibold transition-all hover:bg-white/50" id="d-qr">Scanner</button>
+            <button onclick="showTab('ip')" class="px-6 py-2 rounded-full font-semibold transition-all hover:bg-white/50" id="d-ip">Network</button>
         </div>
     </nav>
 
     <main class="container mx-auto p-4 max-w-2xl">
         
         <section id="pdf" class="tab-content active">
-            <div class="glass-card p-8 shadow-2xl">
-                <h2 class="text-3xl font-bold mb-6 flex items-center gap-2">🖼️ <span class="text-orange-400">Image</span> to PDF</h2>
-                <input type="file" id="imageInput" accept="image/*" class="block w-full text-sm text-gray-200 file:mr-4 file:py-3 file:px-6 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-orange-500 file:text-white hover:file:bg-orange-600 transition-all cursor-pointer mb-6"/>
-                <button onclick="convertToPDF()" class="w-full bg-gradient-to-r from-orange-500 to-orange-600 py-4 rounded-xl font-bold text-lg hover:scale-[1.02] active:scale-95 transition-all shadow-lg">Convert & Download</button>
+            <div class="glass-card p-10">
+                <div class="bg-graphic"></div>
+                <div class="relative z-10">
+                    <span class="bg-orange-100 text-orange-600 px-4 py-1 rounded-full text-xs font-bold uppercase">Study & Work</span>
+                    <h2 class="text-4xl font-extrabold mt-2 mb-6 text-slate-800">Smart <span class="text-blue-500">PDF</span> Tools</h2>
+                    <p class="mb-6 text-slate-500">Convert your photos into professional PDF documents instantly.</p>
+                    <div class="border-2 border-dashed border-blue-200 rounded-2xl p-8 bg-blue-50/50 text-center">
+                        <input type="file" id="imageInput" accept="image/*" class="hidden"/>
+                        <label for="imageInput" class="cursor-pointer block">
+                            <div class="text-5xl mb-2">📄</div>
+                            <span class="text-blue-600 font-bold">Choose Image</span>
+                        </label>
+                    </div>
+                    <button onclick="convertToPDF()" class="mt-6 w-full bg-orange-500 text-white py-4 rounded-2xl font-bold text-lg hover:bg-orange-600 transition shadow-lg shadow-orange-200">Generate PDF</button>
+                </div>
             </div>
         </section>
 
         <section id="weather" class="tab-content">
-            <div class="glass-card p-8 shadow-2xl">
-                <h2 class="text-3xl font-bold mb-6">🌦️ Weather <span class="text-orange-400">Update</span></h2>
-                <div class="flex gap-2 mb-8">
-                    <input type="text" id="cityInput" placeholder="Enter city name..." class="flex-1 bg-white/10 border border-white/20 rounded-xl p-4 text-white placeholder-gray-300 focus:ring-2 focus:ring-orange-400 outline-none">
-                    <button onclick="getWeatherByCity()" class="bg-orange-500 px-6 rounded-xl font-bold hover:bg-orange-600 transition">Search</button>
+            <div class="glass-card p-10">
+                <div class="bg-graphic"></div>
+                <div class="relative z-10">
+                    <span class="bg-blue-100 text-blue-600 px-4 py-1 rounded-full text-xs font-bold uppercase">Nature Live</span>
+                    <h2 class="text-4xl font-extrabold mt-2 mb-6 text-slate-800">Atmosphere</h2>
+                    <div class="flex gap-2 mb-8 bg-white/50 p-2 rounded-2xl shadow-inner">
+                        <input type="text" id="cityInput" placeholder="Search city..." class="flex-1 bg-transparent border-none p-3 outline-none font-medium">
+                        <button onclick="getWeatherByCity()" class="bg-blue-500 text-white px-6 rounded-xl font-bold">Go</button>
+                    </div>
+                    <div id="weatherDisplay" class="text-center py-6 min-h-[150px]">
+                        <div class="animate-bounce text-4xl">☁️</div>
+                    </div>
+                    <div id="forecastDisplay" class="grid grid-cols-2 gap-4 mt-4"></div>
                 </div>
-                <div id="weatherDisplay" class="text-center py-4">
-                    <div class="animate-pulse">Locating...</div>
-                </div>
-                <div id="forecastDisplay" class="grid grid-cols-2 gap-3 mt-6"></div>
             </div>
         </section>
 
         <section id="qr" class="tab-content">
-            <div class="glass-card p-8 shadow-2xl">
-                <h2 class="text-3xl font-bold mb-6">🔍 Smart <span class="text-orange-400">Scanner</span></h2>
-                <div id="reader" class="w-full rounded-2xl overflow-hidden border-2 border-orange-400/30"></div>
-                <div id="qr-result" class="mt-6 p-4 bg-black/20 rounded-xl text-center break-all font-mono text-orange-300">Result will appear here...</div>
+            <div class="glass-card p-10">
+                <div class="bg-graphic"></div>
+                <div class="relative z-10">
+                    <span class="bg-green-100 text-green-600 px-4 py-1 rounded-full text-xs font-bold uppercase">Digital Scan</span>
+                    <h2 class="text-4xl font-extrabold mt-2 mb-6 text-slate-800">Lens <span class="text-orange-500">Scanner</span></h2>
+                    <div id="reader" class="w-full rounded-3xl overflow-hidden border-4 border-white shadow-xl"></div>
+                    <div id="qr-result" class="mt-8 p-5 bg-white/80 rounded-2xl text-center font-bold text-blue-600 shadow-sm border border-blue-50">
+                        Align QR within frame
+                    </div>
+                </div>
             </div>
         </section>
 
         <section id="ip" class="tab-content">
-            <div class="glass-card p-8 shadow-2xl text-center">
-                <h2 class="text-3xl font-bold mb-6">🌐 My <span class="text-orange-400">Network</span> IP</h2>
-                <div id="ip-info" class="space-y-4">
-                    <p class="text-gray-200">Checking your digital footprint...</p>
+            <div class="glass-card p-10 text-center">
+                <div class="bg-graphic"></div>
+                <div class="relative z-10">
+                    <span class="bg-indigo-100 text-indigo-600 px-4 py-1 rounded-full text-xs font-bold uppercase">Global ID</span>
+                    <h2 class="text-4xl font-extrabold mt-2 mb-8 text-slate-800">Network <span class="text-blue-500">Pulse</span></h2>
+                    <div id="ip-info" class="space-y-6">
+                        <p class="text-slate-400">Pinging world servers...</p>
+                    </div>
+                    <button onclick="checkIP()" class="mt-10 bg-slate-800 text-white px-8 py-3 rounded-full font-bold hover:scale-105 transition">Refresh Node</button>
                 </div>
-                <button onclick="checkIP()" class="mt-8 bg-white/10 hover:bg-white/20 px-6 py-2 rounded-full text-sm transition border border-white/20">Refresh Connection</button>
             </div>
         </section>
 
     </main>
 
-    <nav class="md:hidden fixed bottom-0 w-full bg-black/40 backdrop-blur-xl flex justify-around p-4 border-t border-white/10 z-50">
-        <button onclick="showTab('pdf')" class="flex flex-col items-center gap-1 group">
-            <span class="text-2xl group-hover:scale-110 transition">📄</span><span class="text-[10px] uppercase tracking-widest">PDF</span>
-        </button>
-        <button onclick="showTab('weather')" class="flex flex-col items-center gap-1 group">
-            <span class="text-2xl group-hover:scale-110 transition">☀️</span><span class="text-[10px] uppercase tracking-widest">Sky</span>
-        </button>
-        <button onclick="showTab('qr')" class="flex flex-col items-center gap-1 group">
-            <span class="text-2xl group-hover:scale-110 transition">📷</span><span class="text-[10px] uppercase tracking-widest">Scan</span>
-        </button>
-        <button onclick="showTab('ip')" class="flex flex-col items-center gap-1 group">
-            <span class="text-2xl group-hover:scale-110 transition">📡</span><span class="text-[10px] uppercase tracking-widest">IP</span>
-        </button>
+    <nav class="md:hidden fixed bottom-0 w-full bg-white/80 backdrop-blur-2xl flex justify-around p-5 border-t border-white/50 z-50 rounded-t-[40px] shadow-2xl">
+        <button onclick="showTab('pdf')" class="p-3 rounded-2xl transition-all" id="m-pdf">📄</button>
+        <button onclick="showTab('weather')" class="p-3 rounded-2xl transition-all" id="m-weather">☀️</button>
+        <button onclick="showTab('qr')" class="p-3 rounded-2xl transition-all" id="m-qr">📷</button>
+        <button onclick="showTab('ip')" class="p-3 rounded-2xl transition-all" id="m-ip">📡</button>
     </nav>
 
     <script>
-        // --- Tab Management ---
+        // --- Core Tab System ---
         function showTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active'));
             
             document.getElementById(tabId).classList.add('active');
-            if(document.getElementById('d-'+tabId)) document.getElementById('d-'+tabId).classList.add('active');
+            
+            // Set active states
+            const deskBtn = document.getElementById('d-' + tabId);
+            const mobBtn = document.getElementById('m-' + tabId);
+            if(deskBtn) deskBtn.classList.add('nav-active');
+            if(mobBtn) mobBtn.classList.add('nav-active');
 
+            // Handle specific tab starts
             if(tabId !== 'qr' && window.html5QrCode) {
                 window.html5QrCode.stop().catch(() => {});
             } else if (tabId === 'qr') {
@@ -129,31 +175,38 @@
             }
         }
 
-        // --- IP Checker Logic ---
+        // Initialize first tab
+        showTab('pdf');
+
+        // --- IP Checker ---
         async function checkIP() {
             const display = document.getElementById('ip-info');
-            display.innerHTML = '<div class="animate-spin text-4xl mb-4">🌀</div><p>Fetching Network Data...</p>';
+            display.innerHTML = '<div class="text-4xl animate-pulse">📡</div>';
             try {
                 const response = await fetch('https://ipapi.co/json/');
                 const data = await response.json();
                 display.innerHTML = `
-                    <div class="text-4xl font-black text-orange-400 mb-2">${data.ip}</div>
-                    <div class="text-xl font-semibold">${data.city}, ${data.country_name}</div>
-                    <div class="mt-4 grid grid-cols-2 gap-4 text-sm text-gray-300">
-                        <div class="bg-black/20 p-3 rounded-lg"><strong>ISP:</strong><br>${data.org}</div>
-                        <div class="bg-black/20 p-3 rounded-lg"><strong>Lat/Long:</strong><br>${data.latitude}, ${data.longitude}</div>
+                    <div class="text-5xl font-black text-blue-600 mb-2">${data.ip}</div>
+                    <div class="text-xl font-bold text-slate-700">${data.city}, ${data.country_name}</div>
+                    <div class="grid grid-cols-2 gap-4 mt-8">
+                        <div class="bg-white/60 p-4 rounded-2xl shadow-sm border border-white">
+                            <span class="block text-[10px] text-slate-400 uppercase">Provider</span>
+                            <span class="font-bold text-xs">${data.org}</span>
+                        </div>
+                        <div class="bg-white/60 p-4 rounded-2xl shadow-sm border border-white">
+                            <span class="block text-[10px] text-slate-400 uppercase">Region</span>
+                            <span class="font-bold text-xs">${data.region}</span>
+                        </div>
                     </div>
                 `;
-            } catch (e) {
-                display.innerHTML = "Error fetching IP. Please check connection.";
-            }
+            } catch (e) { display.innerHTML = "Error connecting to network."; }
         }
 
-        // --- PDF Logic ---
+        // --- PDF Generation ---
         async function convertToPDF() {
             const { jsPDF } = window.jspdf;
             const input = document.getElementById('imageInput');
-            if (input.files.length === 0) return alert("Please pick an image!");
+            if (input.files.length === 0) return alert("Select an image first!");
 
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -161,9 +214,9 @@
                 img.src = e.target.result;
                 img.onload = () => {
                     const doc = new jsPDF();
-                    const width = doc.internal.pageSize.getWidth();
-                    doc.addImage(img, 'JPEG', 10, 10, width - 20, 150);
-                    doc.save("Vagaira_File.pdf");
+                    doc.addImage(img, 'JPEG', 15, 15, 180, 160);
+                    doc.text("Vagaira PDF Export", 15, 10);
+                    doc.save("Work_File.pdf");
                 };
             };
             reader.readAsDataURL(input.files[0]);
@@ -171,38 +224,31 @@
 
         // --- Weather Logic ---
         const API_KEY = '6c6b9b579178c338415451671e9ff00b'; 
-
         async function fetchWeather(lat, lon, city = null) {
             const url = city 
                 ? `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${API_KEY}`
                 : `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`;
-            
             try {
                 const res = await fetch(url);
                 const data = await res.json();
                 displayWeather(data);
-            } catch (err) {
-                document.getElementById('weatherDisplay').innerHTML = "City not found.";
-            }
+            } catch (err) { document.getElementById('weatherDisplay').innerHTML = "City not found."; }
         }
 
         function displayWeather(data) {
             const current = data.list[0];
             document.getElementById('weatherDisplay').innerHTML = `
-                <h3 class="text-4xl font-black">${data.city.name}</h3>
-                <p class="text-6xl my-4 font-bold text-orange-400">${Math.round(current.main.temp)}°C</p>
-                <p class="capitalize text-lg opacity-80">${current.weather[0].description}</p>
+                <h3 class="text-3xl font-black text-slate-800">${data.city.name}</h3>
+                <div class="text-7xl my-4 font-black text-blue-500">${Math.round(current.main.temp)}°</div>
+                <p class="capitalize font-bold text-slate-400">${current.weather[0].description}</p>
             `;
-            
             let forecastHTML = '';
             for(let i = 8; i < 24; i+=8) {
-                const day = data.list[i];
                 forecastHTML += `
-                    <div class="bg-white/10 p-4 rounded-2xl border border-white/5">
-                        <p class="text-xs opacity-60">${day.dt_txt.split(' ')[0]}</p>
-                        <p class="text-xl font-bold text-orange-300">${Math.round(day.main.temp)}°C</p>
-                    </div>
-                `;
+                    <div class="bg-white/40 p-4 rounded-2xl text-center">
+                        <span class="text-xs opacity-50 block">${data.list[i].dt_txt.split(' ')[0]}</span>
+                        <span class="font-bold text-lg text-blue-600">${Math.round(data.list[i].main.temp)}°C</span>
+                    </div>`;
             }
             document.getElementById('forecastDisplay').innerHTML = forecastHTML;
         }
@@ -214,24 +260,19 @@
 
         navigator.geolocation.getCurrentPosition(pos => {
             fetchWeather(pos.coords.latitude, pos.coords.longitude);
-        }, () => {
-            document.getElementById('weatherDisplay').innerHTML = "Enter a city to see weather";
         });
 
-        // --- Scanner Logic ---
+        // --- QR Scanner ---
         function startScanner() {
             if(!window.html5QrCode) window.html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start(
                 { facingMode: "environment" }, 
-                { fps: 15, qrbox: 250 },
+                { fps: 20, qrbox: 280 },
                 (text) => {
-                    document.getElementById('qr-result').innerHTML = `Link: <a href="${text}" target="_blank" class="text-orange-400 underline">${text}</a>`;
+                    document.getElementById('qr-result').innerHTML = `Detected: <a href="${text}" target="_blank" class="text-orange-500 underline">${text}</a>`;
                 }
             ).catch(() => {});
         }
-
-        // Notification Permission
-        if ("Notification" in window) Notification.requestPermission();
     </script>
 </body>
 </html>
