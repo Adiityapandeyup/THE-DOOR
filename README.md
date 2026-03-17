@@ -1,4 +1,4 @@
-# 🚪 The Door | Multi-Utility Web Ecosystem
+# 🪺 VAGAIRA | Multi-Utility Web Ecosystem
 **A high-performance, mobile-optimized suite of productivity tools designed for seamless cross-platform utility.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
