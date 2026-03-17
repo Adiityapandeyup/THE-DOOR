@@ -9,7 +9,7 @@
 
 ## 🌐 Overview
 
-**The Door** is a lightweight, responsive web application engineered to bridge the gap between desktop power and mobile convenience. Built with a focus on speed and clean UI/UX, it serves as a central hub for daily digital tasks—from document processing to environmental data tracking.
+**VAGAIRA** is a lightweight, responsive web application engineered to bridge the gap between desktop power and mobile convenience. Built with a focus on speed and clean UI/UX, it serves as a central hub for daily digital tasks—from document processing to environmental data tracking.
 
 ### [Project Dashboard Preview Placeholder]
 
@@ -59,7 +59,7 @@ To run this project locally on your machine (VS Code):
 
 1.  **Clone the Repository**:
     ```bash
-    git clone [https://github.com/Adiityapandeyup/THE-DOOR.git](https://github.com/Adiityapandeup/THE-DOOR.git)
+    git clone [https://github.com/Adiityapandeyup/Vagaira.git](https://github.com/Adiityapandeyup/Vagaira.git)
     cd THE-DOOR
     ```
 
@@ -110,4 +110,4 @@ Distributed under the **MIT License**. See `LICENSE` for more information.
 ## 🤝 Contact
 
 **ADITYA**   
-Project Link: [https://github.com/Adiityapandeyup/THE-DOOR](https://github.com/Adiityapandeyup/THE-DOOR)
+Project Link: [https://github.com/Adiityapandeyup/Vagaira](https://github.com/Adiityapandeyup/Vagaira)
