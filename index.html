@@ -56,10 +56,15 @@
             box-shadow: 0 10px 15px rgba(0,0,0,0.1);
         }
 
-        .icon-insta:hover { color: #E4405F; }
-        .icon-linkedin:hover { color: #0A66C2; }
-        .icon-github:hover { color: #333; }
-        .icon-telegram:hover { color: #0088cc; }
+        /* QR Scanner Enhancement */
+        #reader {
+            background: #000;
+            border-radius: 20px;
+        }
+        #reader video {
+            border-radius: 20px;
+            object-fit: cover;
+        }
     </style>
 </head>
 <body class="min-h-screen pb-24 md:pb-0 md:pt-24 flex flex-col">
@@ -122,17 +127,19 @@
                     <button onclick="getWeatherByCity()" class="bg-blue-500 text-white px-6 rounded-xl"><i class="fas fa-search"></i></button>
                 </div>
                 <div id="weatherDisplay" class="min-h-[100px] flex flex-col items-center justify-center">
-                    <p class="text-slate-400">Search for a city to see weather info</p>
+                    <p class="text-slate-400">Search for weather info</p>
                 </div>
             </div>
         </section>
 
         <section id="qr" class="tab-content">
             <div class="glass-card p-10 text-center">
-                <i class="fas fa-qrcode text-5xl text-orange-500 mb-4"></i>
+                <i class="fas fa-expand text-5xl text-orange-500 mb-4"></i>
                 <h2 class="text-4xl font-extrabold mb-6">Lens Scanner</h2>
-                <div id="reader" class="w-full rounded-3xl overflow-hidden border-4 border-white shadow-xl"></div>
-                <div id="qr-result" class="mt-8 p-5 bg-white/80 rounded-2xl font-bold text-blue-600">Align QR Code</div>
+                <div id="reader" class="w-full mx-auto overflow-hidden shadow-2xl border-4 border-white"></div>
+                <div id="qr-result" class="mt-8 p-5 bg-white/80 rounded-2xl font-bold text-blue-600 border border-blue-100">
+                    <i class="fas fa-camera animate-pulse mr-2"></i> Initializing Camera...
+                </div>
             </div>
         </section>
 
@@ -151,6 +158,17 @@
 
     </main>
 
+    <footer class="w-full text-center p-8 bg-white/20 backdrop-blur-md mt-auto">
+        <div class="container mx-auto">
+            <p class="text-slate-700 font-semibold text-sm tracking-widest uppercase">
+                &copy; 2026 <span class="text-blue-600">VAGAIRA</span> ULTRA. All Rights Reserved.
+            </p>
+            <p class="text-slate-500 text-xs mt-2 font-medium">
+                Developed by <span class="text-orange-500">Aditya Kumar Pandey</span>
+            </p>
+        </div>
+    </footer>
+
     <nav class="md:hidden fixed bottom-0 w-full bg-white/80 backdrop-blur-2xl flex justify-around p-5 border-t z-50 rounded-t-[40px] shadow-2xl">
         <button onclick="showTab('home')" class="p-3" id="m-home"><i class="fas fa-home text-xl"></i></button>
         <button onclick="showTab('pdf')" class="p-3" id="m-pdf"><i class="fas fa-file-alt text-xl"></i></button>
@@ -160,7 +178,6 @@
     </nav>
 
     <script>
-        // --- 15 Dynamic Greetings ---
         const greetings = [
             "Ready to simplify your digital tasks?", "Your personal toolkit is online.", "Efficiency starts right here.", 
             "Crafting seamless solutions for you.", "The ultimate utility experience.", "Fast, secure, and stylish tools.", 
@@ -181,78 +198,36 @@
             const mBtn = document.getElementById('m-' + tabId);
             if(dBtn) dBtn.classList.add('nav-active');
             if(mBtn) mBtn.classList.add('nav-active');
-            if(tabId !== 'qr' && window.html5QrCode) window.html5QrCode.stop().catch(() => {});
+            
+            // Clean stop for QR Scanner
+            if(tabId !== 'qr' && window.html5QrCode) {
+                window.html5QrCode.stop().catch(() => {});
+            }
             if(tabId === 'qr') startScanner();
         }
 
-        // --- FIXED WEATHER LOGIC ---
+        // --- FIXED SCANNER LOGIC ---
+        function startScanner() {
+            document.getElementById('qr-result').innerHTML = "Align QR code inside the box...";
+            if(!window.html5QrCode) window.html5QrCode = new Html5Qrcode("reader");
+            
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            
+            window.html5QrCode.start(
+                { facingMode: "environment" }, 
+                config, 
+                (text) => {
+                    document.getElementById('qr-result').innerHTML = `
+                        <div class="text-green-600 mb-2">Success!</div>
+                        <a href="${text}" target="_blank" class="text-blue-500 underline break-all font-bold">${text}</a>
+                    `;
+                }
+            ).catch(err => {
+                document.getElementById('qr-result').innerHTML = `<span class="text-red-500">Camera Error: Please allow permissions.</span>`;
+            });
+        }
+
+        // --- WEATHER LOGIC ---
         const WEATHER_API_KEY = '6c6b9b579178c338415451671e9ff00b'; 
         async function getWeatherByCity() {
-            const city = document.getElementById('cityInput').value;
-            const display = document.getElementById('weatherDisplay');
-            if(!city) return alert("Please enter city name!");
-            
-            display.innerHTML = '<i class="fas fa-spinner fa-spin text-3xl text-blue-500"></i>';
-            try {
-                const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${WEATHER_API_KEY}`);
-                const data = await res.json();
-                if(data.cod === 200) {
-                    display.innerHTML = `
-                        <div class="text-6xl font-black text-blue-600">${Math.round(data.main.temp)}°C</div>
-                        <div class="text-xl font-bold uppercase text-slate-700">${data.name}</div>
-                        <div class="text-slate-500">${data.weather[0].description}</div>
-                    `;
-                } else { display.innerHTML = "City not found!"; }
-            } catch(e) { display.innerHTML = "Error fetching weather."; }
-        }
-
-        // --- FIXED NETWORK (IP) LOGIC ---
-        async function checkIP() {
-            const display = document.getElementById('ip-info');
-            display.innerHTML = '<i class="fas fa-circle-notch fa-spin text-3xl text-indigo-500"></i>';
-            try {
-                const res = await fetch('https://api.ipify.org?format=json'); // Cleaner IP fetching
-                const data = await res.json();
-                const geoRes = await fetch(`https://ipapi.co/${data.ip}/json/`);
-                const geoData = await geoRes.json();
-                display.innerHTML = `
-                    <div class="text-4xl font-black text-indigo-600">${data.ip}</div>
-                    <div class="font-bold text-slate-600 tracking-widest uppercase">${geoData.city || 'Unknown'}, ${geoData.country_name || 'Earth'}</div>
-                `;
-            } catch (e) { display.innerHTML = "Node Connection Failed"; }
-        }
-
-        // --- PDF Logic ---
-        async function convertToPDF() {
-            const { jsPDF } = window.jspdf;
-            const input = document.getElementById('imageInput');
-            if (input.files.length === 0) return alert("Upload an image first!");
-            const btn = document.getElementById('pdfBtn');
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Converting...';
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = () => {
-                    const doc = new jsPDF();
-                    doc.addImage(img, 'JPEG', 15, 15, 180, 160);
-                    doc.save("Vagaira_Doc.pdf");
-                    btn.innerHTML = "Generate PDF";
-                    document.getElementById('pdfStatus').innerHTML = "Success!";
-                    document.getElementById('pdfStatus').classList.remove('hidden');
-                };
-            };
-            reader.readAsDataURL(input.files[0]);
-        }
-
-        function socialConfirm(url) { if(confirm("Visit developer's profile?")) window.open(url, '_blank'); }
-
-        function startScanner() {
-            if(!window.html5QrCode) window.html5QrCode = new Html5Qrcode("reader");
-            window.html5QrCode.start({ facingMode: "environment" }, { fps: 20, qrbox: 250 }, (text) => {
-                document.getElementById('qr-result').innerHTML = `<a href="${text}" target="_blank" class="text-orange-500 underline">${text}</a>`;
-            }).catch(() => {});
-        }
-    </script>
-</body>
-</html>
+            const city = document.getElementById('cityInput').
